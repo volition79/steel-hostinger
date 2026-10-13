@@ -1,0 +1,26 @@
+{
+  "unit_tests": 24,
+  "live": [
+    "Korean and English UI",
+    "actual project name",
+    "mobile no horizontal overflow",
+    "wrong password denied",
+    "cross-origin login denied",
+    "no Basic challenge popup",
+    "Secure HttpOnly SameSite cookie",
+    "authenticated real Steel API",
+    "cookie-authenticated CDP and browser click",
+    "explicit Basic compatibility",
+    "login restart revokes session",
+    "automatic Compose reconciliation with login service",
+    "repeated bootstrap preserves gateway identity"
+  ],
+  "scope": "local Docker and synthetic TLS; user VPS untouched",
+  "sha256": {
+    "login.py": "3941015e1537f9f84e3fd732263f7c1f94139a5a7ed14a04bbbe8f0231561a4c",
+    "login.html": "d6fd442f415d285baad15812650918579372ccb6e4cdfd88fe77bba4ed4e0beb",
+    "gateway.conf": "73b91a98e07cadb9f6ba5e88b5ce681591a1bd9aa9da1e3783045e47a6871f41",
+    "bootstrap.py": "8c0d2a8cbac08d794fc27f59f78e6e81ee11a0303afa98199949e4a72cb15cc5",
+    "Dockerfile.bootstrap": "9c3d15a2f9bf45f5eab6c20764d689f930dbfe43dfbd51b9bb4a8bd6dca7d350"
+  }
+}

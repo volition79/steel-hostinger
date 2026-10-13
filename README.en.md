@@ -24,7 +24,7 @@ Prepare Traefik first if it is absent.
 3. Use a unique project name, such as `steel-browser`.
 4. On supported default Hostinger configurations, **leave Environment empty and deploy**. The hostname and initial password are configured automatically.
 5. Once deployed, click **Open**. If absent, use the HTTPS URL in `bootstrap` logs. Initial certificate issuance can take time.
-6. Enter username **steel** and the initial password from `auth-init` logs in the browser authentication prompt.
+6. Enter only the initial password from `auth-init` logs on the login page. Username is handled automatically. Korean/English follows your browser preference, with a manual language switch.
 7. Open your target website inside Steel and sign in there.
 
 This URL tracks main. Replace main with the supplied commit SHA to pin a release.
@@ -58,7 +58,7 @@ The public file uses the helper digest in images.yaml; regenerate with `python3 
 4. Set `STEEL_HOST` to a hostname pointing to your VPS, e.g. `steel-browser.srv123456.hstgr.cloud`, without a scheme, port or path.
 5. Optionally set `STEEL_PASSWORD` to 16–72 printable ASCII characters on one line. If omitted on first install, a random password is generated once and shown in `auth-init` logs. Existing authentication is preserved when omitted. Keep these logs private. A missing STEEL_HOST permits Compose parsing but blocks initialization with instructions; fill Environment and redeploy.
 6. Deploy and open `https://YOUR-STEEL_HOST`. Hostinger's Open-button discovery still requires VPS verification.
-7. In the browser authentication prompt, enter username **steel** and your chosen or generated password.
+7. On the login page, enter only your chosen or generated password.
 8. When the default browser viewer appears, enter a website address in its address bar.
 
 Requires Traefik's `websecure` entrypoint and `letsencrypt` resolver. The package targets
@@ -86,7 +86,7 @@ succeed before the replacement gateway starts. Use a private window if your brow
 - Deployment failure: check required environment values and `auth-init` logs for password length.
 - 502: allow API/UI startup time, then inspect their logs if the error persists.
 - Blank viewer: confirm WebSockets use `wss://YOUR-STEEL_HOST/...`; open the HTTPS URL.
-- Authentication failure: username is `steel`, not your Hostinger account.
+- Authentication failure: use the installation password, not your Hostinger account. API Basic authentication still uses username `steel`.
 - Reserve RAM/disk capacity for the browser alongside existing AI workloads.
 
 Build with Python 3 and PyYAML: `python3 build_compose.py`.
@@ -116,3 +116,9 @@ If the base VPS hostname resolved to 127.0.1.1, edit the existing project YAML a
 ```text
 ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc
 ```
+
+## Updating to the password-only login page
+
+Replace the existing project YAML with the new compose.auto.yaml, preserving the project name, environment, volumes and any custom settings, then deploy. This update adds the login service and gateway settings; changing only the bootstrap image is insufficient. The existing installation password remains valid.
+
+Browser sessions last at most 12 hours and end when login restarts. A changed password invalidates previous sessions on their next request; restart gateway to close already-open connections. Automation tools can continue to send explicit Basic authentication with username steel and the installation password.

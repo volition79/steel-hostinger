@@ -87,22 +87,31 @@ services:
       \ steel-api:3000; '' steel-ui:80; }\n  # Aggregate limit: proxy peers may share\
       \ one IP; do not trust arbitrary forwarded headers.\n  limit_req_zone $$server_name\
       \ zone=steel_requests:1m rate=20r/s;\n  server {\n    listen 8080;\n    server_name\
-      \ steel_gateway;\n    server_tokens off;\n    auth_basic \"Steel Browser\";\n\
-      \    auth_basic_user_file /auth/users;\n    limit_req zone=steel_requests burst=60\
-      \ nodelay;\n    limit_req_status 429;\n    client_max_body_size 128m;\n    proxy_http_version\
+      \ steel_gateway;\n    server_tokens off;\n    absolute_redirect off;\n    auth_request\
+      \ /_steel/verify;\n    limit_req zone=steel_requests burst=60 nodelay;\n   \
+      \ limit_req_status 429;\n    client_max_body_size 128m;\n    proxy_http_version\
       \ 1.1;\n    proxy_set_header Host $$host;\n    proxy_set_header Upgrade $$http_upgrade;\n\
       \    proxy_set_header Connection $$connection_upgrade;\n    proxy_set_header\
       \ Authorization \"\";\n    proxy_read_timeout 3600s;\n    proxy_send_timeout\
-      \ 3600s;\n    proxy_buffering off;\n    # Native Steel viewer, DevTools and\
-      \ browser cast/CDP endpoints.\n    location /v1/ { set $$backend steel-api:3000;\
+      \ 3600s;\n    proxy_buffering off;\n    location = /_steel/verify {\n      internal;\n\
+      \      auth_request off;\n      set $$auth_backend login:8081;\n      proxy_pass\
+      \ http://$$auth_backend/verify;\n      proxy_method GET;\n      proxy_pass_request_body\
+      \ off;\n      proxy_set_header Content-Length \"\";\n      proxy_set_header\
+      \ Authorization $$http_authorization;\n      proxy_set_header Cookie $$http_cookie;\n\
+      \    }\n    location = /_steel/login {\n      auth_request off;\n      set $$auth_backend\
+      \ login:8081;\n      proxy_pass http://$$auth_backend;\n      proxy_set_header\
+      \ Host $$http_host;\n      proxy_set_header Authorization \"\";\n    }\n   \
+      \ location @login_required {\n      if ($$http_upgrade != \"\") { return 401;\
+      \ }\n      return 303 /_steel/login;\n    }\n    # Native Steel viewer, DevTools\
+      \ and browser cast/CDP endpoints.\n    location /v1/ { set $$backend steel-api:3000;\
       \ proxy_pass http://$$backend; }\n    # UI uses /api and /ws prefixes; strip\
       \ exactly once.\n    location /api/ {\n      set $$backend steel-api:3000;\n\
       \      rewrite ^/api/(.*)$$ /$$1 break;\n      proxy_pass http://$$backend;\n\
       \    }\n    location /ws/ {\n      set $$backend steel-api:3000;\n      rewrite\
       \ ^/ws/(.*)$$ /$$1 break;\n      proxy_pass http://$$backend;\n    }\n    #\
       \ Steel advertises a root CDP websocket; ordinary requests serve the UI.\n \
-      \   location / { proxy_pass http://$$steel_upstream; }\n  }\n}\nSTEEL_NGINX\n\
-      exec nginx -c /tmp/steel-nginx.conf -g 'daemon off;'"
+      \   location / { error_page 401 = @login_required; proxy_pass http://$$steel_upstream;\
+      \ }\n  }\n}\nSTEEL_NGINX\nexec nginx -c /tmp/steel-nginx.conf -g 'daemon off;'"
     environment:
       STEEL_HOST: ${STEEL_HOST:-setup.invalid}
     mem_limit: 192m
@@ -118,6 +127,8 @@ services:
         condition: service_completed_successfully
       steel-api:
         condition: service_healthy
+      login:
+        condition: service_started
       steel-ui:
         condition: service_healthy
       bootstrap:
@@ -135,11 +146,41 @@ services:
     healthcheck:
       test:
       - CMD-SHELL
-      - test "$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/)" =
-        401
+      - test "$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/api/v1/health)"
+        = 401
       interval: 5s
       timeout: 3s
       retries: 20
+  login:
+    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc
+    restart: unless-stopped
+    init: true
+    command:
+    - python
+    - /app/login.py
+    user: 10002:10002
+    read_only: true
+    cap_drop:
+    - ALL
+    security_opt:
+    - no-new-privileges:true
+    mem_limit: 96m
+    cpus: 0.5
+    pids_limit: 48
+    environment:
+      STEEL_PROJECT: ${COMPOSE_PROJECT_NAME}
+    volumes:
+    - auth:/auth:ro
+    depends_on:
+      auth-init:
+        condition: service_completed_successfully
+    labels:
+      traefik.enable: 'false'
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
   steel-ui:
     image: ghcr.io/steel-dev/steel-browser-ui@sha256:b7f0906953175c48037a293b11d789f1b05ca786585a46128e15bdeb26f37dc8
     restart: unless-stopped

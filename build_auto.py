@@ -8,6 +8,7 @@ def build_auto(image=None):
     if not image:
         raise ValueError('Bootstrap image is not published yet; pass --image for a local build.')
     result=build(); services=result['services']
+    services['login']['image']=image
     read=(ROOT/'read-auto-host.sh').read_text().replace('$','$$')
     services['bootstrap']={
         'image':image,'restart':'no','init':True,'read_only':True,
@@ -28,7 +29,7 @@ def build_auto(image=None):
     gateway=services['gateway']
     gateway['labels']={'traefik.enable':'false','io.steel-hostinger.managed':'steel-hostinger-auto-v1'}
     gateway['networks']={'default':{}}
-    gateway['healthcheck']={'test':['CMD-SHELL','test "$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/)" = 401'],
+    gateway['healthcheck']={'test':['CMD-SHELL','test "$$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/api/v1/health)" = 401'],
                             'interval':'5s','timeout':'3s','retries':20}
     result['volumes']['setup']={}
     return result

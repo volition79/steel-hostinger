@@ -63,3 +63,9 @@ User VPS evidence showed the base hostname resolving to 127.0.1.1 while the gene
 Twenty scoped tests now pass. A real read-only Docker helper container with the base hostname overridden to 127.0.1.1 successfully verified both public names through HTTPS DNS. Local IPv4-only resolution is accepted only as a subset of the matching public A/AAAA records. Genuine mismatches and unavailable/malformed public DNS remain blocked. Routing, credentials and persistent volumes are unchanged. Hostinger redeployment remains the user's acceptance test.
 
 - Corrected release: Actions 38360900823 succeeded; anonymous Docker pull and the loopback regression passed again on the published image. Embedded source hash matches checkout. Automatic Compose changed only the bootstrap image and still parses with empty environment.
+
+## Password-only login follow-up
+
+24 unit/contract tests passed. Actual nginx + Steel + private login service behind local TLS: Korean/English and project-specific instructions rendered; mobile layout inspected; bad password and cross-origin submissions blocked without a native Basic-auth challenge. Successful form login sets a Secure/HttpOnly/SameSite=Strict opaque cookie. Cookie-authenticated Steel API and actual CDP browser interaction passed, as did explicit Basic API compatibility and restart revocation. Password-change/expiry invalidation is unit-tested. Source is pinned to Python 3.12, whose crypt module supports the existing bcrypt hashes; moving to Python 3.13 requires replacing that verifier.
+
+The no-Buzz automatic Docker/Traefik fixture passed with the additional login service, including gateway reconciliation and idempotent bootstrap rerun. Hostinger UI acceptance remains user-operated. This release requires the full Compose change (login service plus gateway), not just a bootstrap image change. Existing volumes/passwords are preserved.

@@ -172,7 +172,8 @@ def route_labels(plan):
 
 def updated(raw, plan):
     result=copy.deepcopy(raw)
-    if set(result['services'])!={'bootstrap','auth-init','gateway','steel-api','steel-ui'}:
+    if set(result['services']) not in ({'bootstrap','auth-init','gateway','steel-api','steel-ui'},
+                                        {'bootstrap','auth-init','gateway','steel-api','steel-ui','login'}):
         raise Pending('unexpected_compose_services')
     gateway=result['services']['gateway']
     old=gateway.get('labels',{})

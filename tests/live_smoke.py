@@ -19,9 +19,10 @@ os.environ['NODE_TLS_REJECT_UNAUTHORIZED'] = '0'
 checks = []
 with sync_playwright() as p:
     unauth = p.request.new_context(ignore_https_errors=True)
-    for path in ('/', '/api/v1/sessions', '/v1/sessions/debug', '/ws/'):
+    assert unauth.get(base + '/', max_redirects=0).status == 303
+    for path in ('/api/v1/sessions', '/v1/sessions/debug', '/ws/'):
         assert unauth.get(base + path).status == 401, path
-    assert unauth.get(base + '/', headers={'Authorization': 'Basic c3RlZWw6d3Jvbmc='}).status == 401
+    assert unauth.get(base + '/api/v1/sessions', headers={'Authorization': 'Basic c3RlZWw6d3Jvbmc='}).status == 401
     checks.append('unauthenticated UI/API/viewer/WS path and wrong password denied')
     api = p.request.new_context(ignore_https_errors=True, extra_http_headers={'Authorization': auth})
     direct = api.get(base + '/v1/sessions')
@@ -41,7 +42,7 @@ with sync_playwright() as p:
                     '</body></html>')
     browser = p.chromium.launch(headless=True, args=['--no-sandbox'])
     context = browser.new_context(ignore_https_errors=True,
-                                  http_credentials={'username': 'steel', 'password': password})
+                                  extra_http_headers={'Authorization': auth})
     page = context.new_page()
     frames_received = []
     page.on('websocket', lambda ws: ws.on('framereceived', lambda data: frames_received.append(len(data))))

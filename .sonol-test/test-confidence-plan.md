@@ -52,3 +52,13 @@ Keep ordinary local equality unchanged and reject genuine mismatches, failed/mal
 non-public fallback addresses and unexpected local addresses. Log address-only diagnostics (no credentials).
 Validate regression cases, actual container with base hostname overridden to loopback, image/source parity,
 anonymous pull and raw installer verification. Existing volumes and routing code are unchanged.
+
+## LOGIN-03 password-only browser login
+
+User requested a dedicated login page with automatic username and bilingual password retrieval instructions.
+Existing approved scope: CodeMap off; scoped tests; no policy pack, no VPS mutation.
+New boundary: private login service uses read-only existing htpasswd; opaque HttpOnly/Secure/SameSite cookie;
+nginx auth_request protects UI/API/WebSocket and preserves explicit Basic authentication for tools.
+Runtime sessions expire after 12h and invalidate on password hash change or login-service restart.
+Test bilingual/project escaping, bad password, cookie flags, origin checks, authenticated API and real WebSocket,
+password-change invalidation, anonymous API denial, no native browser prompt and desktop/mobile rendering.

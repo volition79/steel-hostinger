@@ -1,0 +1,109 @@
+services:
+  auth-init:
+    image: httpd@sha256:3440c39d8d6f54fa9ad2549e5a60c19ddd435faadc29c1ad28aa795f71888889
+    restart: 'no'
+    entrypoint:
+    - /bin/sh
+    - -ec
+    command:
+    - umask 077; test "$${#STEEL_PASSWORD}" -ge 16 || { echo "Use a password of at
+      least 16 characters" >&2; exit 1; }; printf "%s\n" "$$STEEL_PASSWORD" | htpasswd
+      -i -B -C 12 -c /auth/users.new steel; chmod 644 /auth/users.new; mv /auth/users.new
+      /auth/users
+    environment:
+      STEEL_PASSWORD: ${STEEL_PASSWORD:?Set a unique password of at least 16 characters}
+    volumes:
+    - auth:/auth
+    network_mode: none
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
+  gateway:
+    image: nginx@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+    restart: unless-stopped
+    entrypoint:
+    - /bin/sh
+    - -ec
+    command:
+    - "cat > /tmp/steel-nginx.conf <<'STEEL_NGINX'\nworker_processes auto;\nevents\
+      \ { worker_connections 1024; }\nhttp {\n  include /etc/nginx/mime.types;\n \
+      \ resolver 127.0.0.11 valid=10s ipv6=off;\n  map $$http_upgrade $$connection_upgrade\
+      \ { default upgrade; '' close; }\n  map $$http_upgrade $$steel_upstream { default\
+      \ steel-api:3000; '' steel-ui:80; }\n  server {\n    listen 8080;\n    server_tokens\
+      \ off;\n    auth_basic \"Steel Browser\";\n    auth_basic_user_file /auth/users;\n\
+      \    client_max_body_size 32m;\n    proxy_http_version 1.1;\n    proxy_set_header\
+      \ Host $$host;\n    proxy_set_header Upgrade $$http_upgrade;\n    proxy_set_header\
+      \ Connection $$connection_upgrade;\n    proxy_set_header Authorization \"\"\
+      ;\n    proxy_read_timeout 3600s;\n    proxy_send_timeout 3600s;\n    proxy_buffering\
+      \ off;\n    # Native Steel viewer, DevTools and browser cast/CDP endpoints.\n\
+      \    location /v1/ { set $$backend steel-api:3000; proxy_pass http://$$backend;\
+      \ }\n    # UI uses /api and /ws prefixes; strip exactly once.\n    location\
+      \ /api/ {\n      set $$backend steel-api:3000;\n      rewrite ^/api/(.*)$$ /$$1\
+      \ break;\n      proxy_pass http://$$backend;\n    }\n    location /ws/ {\n \
+      \     set $$backend steel-api:3000;\n      rewrite ^/ws/(.*)$$ /$$1 break;\n\
+      \      proxy_pass http://$$backend;\n    }\n    # Steel advertises a root CDP\
+      \ websocket; ordinary requests serve the UI.\n    location / { proxy_pass http://$$steel_upstream;\
+      \ }\n  }\n}\nSTEEL_NGINX\nexec nginx -c /tmp/steel-nginx.conf -g 'daemon off;'"
+    expose:
+    - '8080'
+    volumes:
+    - auth:/auth:ro
+    depends_on:
+      auth-init:
+        condition: service_completed_successfully
+      steel-api:
+        condition: service_started
+      steel-ui:
+        condition: service_started
+    labels:
+    - traefik.enable=true
+    - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${STEEL_HOST:?Enter
+      the Steel hostname without https or a path}`)
+    - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+    - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
+    - traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}
+    - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
+  steel-ui:
+    image: ghcr.io/steel-dev/steel-browser-ui@sha256:b7f0906953175c48037a293b11d789f1b05ca786585a46128e15bdeb26f37dc8
+    restart: unless-stopped
+    environment:
+      API_URL: http://steel-api:3000
+    labels:
+      traefik.enable: 'false'
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
+  steel-api:
+    image: ghcr.io/steel-dev/steel-browser-api@sha256:459919842ab1aac5201e33331fc070a13106edd26d968fc7551adcff334b54cf
+    restart: unless-stopped
+    shm_size: 1gb
+    environment:
+      DOMAIN: ${STEEL_HOST:?Enter the Steel hostname without https or a path}
+      USE_SSL: 'true'
+      LOG_STORAGE_ENABLED: 'true'
+      LOG_STORAGE_PATH: /data/logs/browser-logs.duckdb
+    volumes:
+    - logs:/data/logs
+    - exports:/tmp/steel-browser-exports
+    - cache:/app/.cache
+    labels:
+      traefik.enable: 'false'
+    logging:
+      driver: json-file
+      options:
+        max-size: 5m
+        max-file: '2'
+volumes:
+  auth: {}
+  logs: {}
+  exports: {}
+  cache: {}

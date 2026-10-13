@@ -1,0 +1,121 @@
+{
+  "schema": "sonol.test-confidence.config.v1",
+  "report_schema": "sonol.test-confidence-report.v1",
+  "manifest_schema": "sonol.test-confidence-catalog.v1",
+  "projection_schema": "sonol.test-selection-index.v1",
+  "manifest": ".sonol-test/test-confidence-catalog.json",
+  "plan": ".sonol-test/test-confidence-plan.md",
+  "codemap": {
+    "graph": "codemap-go-v2/_meta/graph_adjacency.json",
+    "symbol_index": "codemap-go-v2/_meta/symbol_index.json",
+    "related_edge_kinds": [
+      "calls",
+      "imports",
+      "queries",
+      "reads_table",
+      "writes_table",
+      "loads_asset"
+    ]
+  },
+  "output": {
+    "test_selection_index": "codemap-go-v2/_meta/test_selection_index.json"
+  },
+  "tests": {
+    "min_discovered_tests": 0,
+    "go_modules": [],
+    "python_roots": [
+      "tests"
+    ],
+    "omitted_modules": [],
+    "omitted_prefixes": [
+      "tests/"
+    ],
+    "verification_contract_hints": {}
+  },
+  "selection_budget": {
+    "max_selected_ratio": 0.35
+  },
+  "policy": {
+    "docs": [
+      "AGENTS.md",
+      "AGENTS__FOR_CODER.md",
+      "docs/**/*.md"
+    ],
+    "normative_keywords": [
+      "must",
+      "only",
+      "never",
+      "do not",
+      "fail closed",
+      "preserve",
+      "redact",
+      "approval",
+      "rollback",
+      "\ubc18\ub4dc\uc2dc",
+      "\uae08\uc9c0",
+      "\ubcf4\uc874"
+    ]
+  },
+  "incidents": {
+    "linked_test_rules": []
+  },
+  "release": {
+    "verification_schema": "release-verification.v1",
+    "supplemental_schema": "release-confidence-evidence.v1",
+    "url_path_marker": "/releases/",
+    "required_evidence": [
+      "version_source",
+      "package_sha256_size",
+      "live_url_header_and_bytes"
+    ],
+    "claim_modes": [
+      "preflight",
+      "release",
+      "cutover"
+    ],
+    "strict_modes": [
+      "release",
+      "cutover"
+    ],
+    "supplemental_modes": [
+      "actual_host",
+      "deterministic_fixture"
+    ],
+    "supplemental_pass_modes": [
+      "actual_host"
+    ],
+    "supplemental_required_ids": []
+  },
+  "ignore": {
+    "untracked_prefixes": [
+      ".sonol-test/runtime/",
+      ".sonol-policy-validator/runtime/",
+      ".codex/memories/",
+      ".wrangler/cache/",
+      "codemap-go-v2/",
+      "logs/",
+      "runtime/",
+      "bots/",
+      "node_modules/",
+      "dist/",
+      "build/",
+      "__pycache__/"
+    ],
+    "untracked_suffixes": [
+      ".pyc",
+      ".zip",
+      ".exe",
+      ".dll",
+      ".dylib",
+      ".so",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".ttf",
+      ".pdf"
+    ],
+    "untracked_exact": []
+  },
+  "read_limits": {}
+}

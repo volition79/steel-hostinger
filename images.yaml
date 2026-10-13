@@ -1,0 +1,4 @@
+api: ghcr.io/steel-dev/steel-browser-api@sha256:459919842ab1aac5201e33331fc070a13106edd26d968fc7551adcff334b54cf
+httpd: httpd@sha256:3440c39d8d6f54fa9ad2549e5a60c19ddd435faadc29c1ad28aa795f71888889
+nginx: nginx@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+ui: ghcr.io/steel-dev/steel-browser-ui@sha256:b7f0906953175c48037a293b11d789f1b05ca786585a46128e15bdeb26f37dc8

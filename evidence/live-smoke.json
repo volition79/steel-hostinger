@@ -1,0 +1,8 @@
+{
+  "passed": [
+    "unauthenticated UI/API/viewer/WS path and wrong password denied",
+    "API prefix rewrite and generated HTTPS/WSS URLs",
+    "authenticated root CDP and external navigation",
+    "real viewer frames, remote canvas click and keyboard input"
+  ]
+}

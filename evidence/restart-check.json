@@ -1,0 +1,6 @@
+{
+  "short_password_rejected": true,
+  "existing_auth_preserved": true,
+  "nginx_config_valid": true,
+  "restart_completed": true
+}

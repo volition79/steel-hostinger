@@ -1,0 +1,7 @@
+{
+  "schema": "sonol.test-confidence-catalog.v1",
+  "lanes": [],
+  "policy_mappings": [],
+  "release_gates": [],
+  "waivers": []
+}

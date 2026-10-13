@@ -3,7 +3,38 @@
 Uses official Steel API/UI images with an authenticated, same-origin gateway.
 This is a separate package and does not change Buzz. **Local Docker checks passed; Hostinger VPS validation remains outstanding.**
 
-## Install
+## Optional installation and support scope
+
+**Steel Browser is optional. It is not a required component of buzz-agents.**
+An existing Buzz Relay and buzz-agents can provide AI conversations, collaboration and code execution without Steel.
+Consider Steel only when you need a browser on the VPS for website interaction or browser automation.
+Installing Steel does not automatically connect browser tools to Buzz agents; that integration is a separate step.
+
+Steel itself does not require Buzz or buzz-agents.
+This package requires **Hostinger Docker Manager and a running Traefik instance**.
+Prepare Traefik first if it is absent.
+
+Automatic setup is implemented in the local development version. A real Docker fixture without Buzz verified discovery, Traefik forwarding, authenticated Steel API access and idempotent reruns.
+The new helper image is not published yet. Hostinger Open-button discovery and public certificate issuance remain unverified.
+The public manual installer still needs STEEL_HOST. Do not use the development compose.auto.yaml in URL installation: it currently references a local test image.
+
+## Automatic setup conditions
+
+The intended published flow is: deploy by URL → automatic address configuration → Open → login.
+STEEL_HOST and STEEL_PASSWORD may be omitted; the initial generated password appears in auth-init logs.
+
+- Requires one running Traefik with a confirmed Docker provider and identifiable HTTPS entrypoint/certificate resolver.
+- Finds srv<number>.hstgr.cloud from the Docker server name, Traefik environment or existing router labels; Buzz is not required.
+- Missing or conflicting candidates and unresolved DNS stop automatic configuration with a bootstrap log message. Fix the prerequisite and restart the project.
+- Saved host/network identity is retained. A changed discovery result stops rather than silently changing the API's public origin.
+- Only this project's gateway labels/network are reconciled. Other projects and data volumes are preserved.
+- Only the helper receives the Docker socket and its own Compose directory. Docker socket access is administrator-level control over VPS containers; it is never given to the browser/API/UI.
+- File-only provider configuration that cannot be confirmed, multiple Traefik instances or conflicting domains are outside the automatic support scope.
+
+For development, build Dockerfile.bootstrap as steel-bootstrap:test, then run `python3 build_auto.py --image steel-bootstrap:test`.
+Before public release, publish the helper and regenerate using its verified digest.
+
+## Manual installation using the public file
 
 1. Ensure Hostinger's Traefik is running.
 2. Docker Manager → Compose from URL:
@@ -11,9 +42,9 @@ This is a separate package and does not change Buzz. **Local Docker checks passe
    Replace `main` with a commit SHA to pin the package version. No relative files or image builds are needed.
 3. Choose a unique project name, such as `steel-browser`.
 4. Set `STEEL_HOST` to a hostname pointing to your VPS, e.g. `steel-browser.srv123456.hstgr.cloud`, without a scheme, port or path.
-5. Set `STEEL_PASSWORD` to a unique password of at least 16 characters. Long random alphanumeric values avoid environment-file escaping issues.
+5. Optionally set `STEEL_PASSWORD` to 16–72 printable ASCII characters on one line. If omitted on first install, a random password is generated once and shown in `auth-init` logs. Existing authentication is preserved when omitted. Keep these logs private. A missing STEEL_HOST permits Compose parsing but blocks initialization with instructions; fill Environment and redeploy.
 6. Deploy and open `https://YOUR-STEEL_HOST`. Hostinger's Open-button discovery still requires VPS verification.
-7. In the browser authentication prompt, enter username **steel** and your chosen password.
+7. In the browser authentication prompt, enter username **steel** and your chosen or generated password.
 8. When the default browser viewer appears, enter a website address in its address bar.
 
 Requires Traefik's `websecure` entrypoint and `letsencrypt` resolver. The package targets
@@ -27,8 +58,7 @@ Installing this package does not automatically equip Buzz agents with a browser 
 Automation clients must send authentication too. API/UI/WebSocket share one protected origin;
 API and CDP ports are not published to the host.
 
-Logs, exports and cache have persistent volumes. Website login persistence across session
-recreation or container restarts is **not guaranteed** by those volumes.
+Logs, exports and cache have persistent volumes. The default browser profile now has its own `browser` volume. Previous temporary profiles are not migrated. Website expiry/logout and separately created sessions may still require login.
 
 Before updating, finish work and back up volumes. Edit/redeploy the same project using
 the new package, preserving volumes. Images are digest-pinned: the Docker Manager
@@ -50,3 +80,17 @@ Contract checks: `python3 -m unittest discover -s tests -v`.
 See `VERIFICATION.md` for actual evidence and remaining checks.
 
 Sources: https://github.com/steel-dev/steel-browser and https://docs.steel.dev/overview/self-hosting/docker
+
+## Limits and recovery
+
+Keep the project name unchanged: another name creates separate volumes. To recover a lost password, set STEEL_PASSWORD and redeploy, then restart gateway to disconnect existing WebSockets. Restart alone does not apply changed environment values.
+
+API memory defaults to 2GiB; STEEL_MEMORY_LIMIT may override it (e.g. 3g), subject to VPS capacity. This protects other workloads, not a guarantee against browser OOM. Gateway traffic has an aggregate 20 requests/second limit with burst 60; wait/retry on 429. Gateway request bodies are limited to 128MiB. Connections with no upstream data for one hour may close; refresh/reconnect. This is not a total task-duration limit.
+
+Never delete a browser profile lock while another browser may own it. Recent changes not yet written to disk may be lost on an unclean shutdown.
+
+### Profile ownership and readiness
+
+Only one API from this package may own the browser volume. The startup wrapper holds an exclusive file lock for the API lifetime and removes only stale Chromium singleton links after acquiring it. Do not share this volume with another service or older unwrapped container. Stop the existing API before replacing it. Exit code 73 means another owner holds the lock. Never delete the ownership lock file.
+
+Readiness checks both the API and actual Chromium endpoint. Docker does not automatically restart a container merely because it becomes unhealthy. Recent cookie/input changes may not reach disk before a crash; persistent storage is not a guarantee of continued website authentication.

@@ -1,45 +1,56 @@
 # Verification — 2026-10-13
 
-Scope: standalone Steel deployment package. Existing Buzz and Hostinger VPS were not modified.
+Scope: standalone Steel package. Existing Buzz and Hostinger VPS were not modified.
 
-## Passed
+## Passed locally
 
-- Docker Compose parsed the standalone file with environment interpolation. Router label keys use list syntax so the project name is interpolated.
-- Three Python package contract tests passed. Generated YAML matches source; images are digest-pinned; backend ports are not published; generated public URLs use TLS.
-- Nginx configuration syntax passed inside the pinned gateway image.
-- Actual pinned Steel API/UI ran on Docker Desktop Engine 28.3.3 (Linux containers).
-- Local HTTPS terminator + authenticated gateway + official UI + official API were tested together.
-- Unauthenticated requests to UI, API, viewer and WebSocket paths returned 401. Incorrect credentials returned 401.
-- `/v1/sessions` and `/api/v1/sessions` returned successful responses. An initial proxy rewrite-order defect caused `/api/v1/sessions` to return 500; moving backend assignment before `rewrite ... break` fixed it. The live test explicitly asserts both paths return 200.
-- Steel returned HTTPS debug URLs and a WSS CDP URL at the public origin.
-- Playwright connected over authenticated root CDP and navigated the actual remote browser to example.com.
-- The real viewer received image frames. Clicking the viewer canvas and typing changed a remote HTML input; the value was checked through CDP. The input page is a test fixture injected after the external navigation, not part of example.com.
-- After API/UI/gateway restart, the same live navigation/viewer/input checks passed again.
-- A short password was rejected by `auth-init`; the existing authentication file remained unchanged.
+- Five package contract tests: generated YAML parity, routed/authenticated boundary, secure URL settings, hostname validation, readiness/profile configuration.
+- Docker Compose parses with an empty environment. This proves Compose parsing only, not Hostinger import. Missing STEEL_HOST intentionally blocks initialization with an actionable message.
+- Actual pinned Steel API/UI and authenticated Nginx gateway run on Docker Desktop Linux containers, with a local self-signed TLS terminator.
+- Unauthenticated UI/API/viewer/WebSocket requests and wrong credentials return 401.
+- Both `/v1/sessions` and `/api/v1/sessions` work; generated viewer/CDP URLs use HTTPS/WSS.
+- Authenticated root CDP navigation, real viewer frames, canvas clicks and keyboard input pass before and after forced API/gateway recreation.
+- Authentication initializes a random password once, preserves an existing hash when no override is set, rejects short/overlong/multiline passwords and invalid hostnames without replacing the hash, and applies a valid explicit replacement.
+- Chromium's actual readiness endpoint is checked along with API health. During development, API health alone returned 200 even when Chromium was blocked by a stale profile lock. The wrapper now obtains an exclusive profile lock before removing exactly three stale Chromium singleton paths.
+
+- A second container using the same profile is rejected with exit 73; the running owner's SingletonLock is unchanged.
+- A fresh random cookie value survives forced API container recreation after a 35-second disk-write wait.
+
+- The same committed random cookie survives SIGKILL followed by API startup.
+- A 240-request unauthenticated burst returns 92 responses with 401 and 148 with 429, proving the aggregate rate gate is active.
 
 ## Reproduction
 
-Install Python 3, PyYAML, Playwright with Chromium, Docker Compose, and OpenSSL.
+Python 3, PyYAML, Playwright with Chromium, Docker Compose, and OpenSSL are required.
 
 ```sh
 python3 -m unittest discover -s tests -v
+python3 tests/auth_smoke.py
 python3 tests/run_local.py
+python3 tests/recovery_smoke.py
 ```
 
-The integration runner uses only the `steel-package-test` local project and localhost port 18443.
-It generates a disposable password and self-signed certificate under ignored `.local/`,
-runs the browser checks before/after restart, and stops the test containers afterwards.
-Test volumes remain for diagnosis. It does not connect to the Hostinger VPS.
-TLS certificate verification is disabled only inside that local self-signed test process.
-The shipped Compose enables HTTPS URLs and does not disable TLS verification.
+Set STEEL_TEST_DOCKER to the Docker executable for the recovery test. Run these sequentially.
+The integration tests use only `steel-package-test` and localhost port 18443.
+Disposable secrets and certificates are under ignored `.local/`; test containers are stopped afterwards and volumes retained for diagnosis.
+Self-signed TLS verification is disabled only in local test processes, not shipped configuration.
+Cookie tests wait 35 seconds for Chromium's batched disk writes. They do not guarantee survival of changes immediately preceding a crash, session-only cookies, or website-issued authentication expiry.
 
 ## Remaining validation
 
-- Hostinger URL import, Open-button discovery, wildcard hostname resolution and Let's Encrypt issuance have NOT been tested for this package.
-- The local TLS terminator exercises secure forwarding, but is not a Hostinger Traefik deployment test.
-- Mobile remote input, DevTools UI, downloads, uploads, and long-running/recovery behavior are not certified by this smoke test.
-- Website login persistence is unverified; cache/log/export volumes alone do not establish it.
-- Buzz agent tool integration is not included.
-- This report records local implementation verification before GitHub publication; publication does not prove Hostinger deployment.
+- Hostinger URL import, Open-button discovery, wildcard DNS and Let's Encrypt issuance still require a real VPS test. Local Compose parsing and TLS forwarding do not prove these.
+- Mobile interaction, DevTools UI, file uploads/downloads and long-duration workloads are not certified by this smoke test.
+- Buzz browser-tool integration is not included.
+- A healthcheck becoming unhealthy does not itself cause Docker to restart a container.
+- Profile volumes must not be shared with unrelated or older containers that bypass this package's ownership lock.
 
-Scoped direct test evidence only; no full Sonol confidence-plan or policy release-gate certification is claimed.
+Scoped direct evidence only; no full Sonol release-gate certification is claimed.
+
+## Automatic setup follow-up
+
+- Twelve scoped unit/contract tests pass, including no-Buzz discovery, host/bridge network selection, environment-form Traefik configuration, disabled provider rejection, ambiguity/collision rejection and preservation of unrelated services.
+- Real local Docker fixture (no Buzz): bootstrap starts the official Steel services, discovers a synthetic Hostinger hostname from Traefik, modifies its actual Compose file, and attaches gateway to the proxy network while preserving the default network.
+- Real Traefik forwards HTTPS: unauthenticated requests return 401; a generated first-install password allows Steel API access; generated public URLs contain the discovered hostname.
+- Re-running bootstrap exits successfully and preserves the gateway container ID.
+- Fixture DNS and certificates are synthetic. Host-mode selection is unit-tested; the real forwarding fixture uses bridge networking. Public ACME and Hostinger deployment/Open are still unverified.
+- Source is local and the bootstrap image has not been publicly released. Development compose.auto.yaml is not a usable public URL installer yet.

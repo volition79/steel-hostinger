@@ -6,12 +6,39 @@ services:
     - /bin/sh
     - -ec
     command:
-    - umask 077; test "$${#STEEL_PASSWORD}" -ge 16 || { echo "Use a password of at
-      least 16 characters" >&2; exit 1; }; printf "%s\n" "$$STEEL_PASSWORD" | htpasswd
-      -i -B -C 12 -c /auth/users.new steel; chmod 644 /auth/users.new; mv /auth/users.new
-      /auth/users
+    - "umask 077\n# Shared by initialization and gateway startup. Never echo untrusted\
+      \ input.\nif ! printf '%s\\n' \"$$STEEL_HOST\" | awk '\n  length($$0)>253 ||\
+      \ length($$0)<4 { exit 1 }\n  /[^a-zA-Z0-9.-]/ { exit 1 }\n  { n=split($$0,a,\"\
+      .\"); if(n<2) exit 1;\n    for(i=1;i<=n;i++) if(length(a[i])<1 || length(a[i])>63\
+      \ || a[i] ~ /^-/ || a[i] ~ /-$$/) exit 1;\n    if(tolower(a[n])==\"invalid\"\
+      ) exit 1;\n    count++ }\n  END { if(count!=1) exit 1 }'; then\n  echo 'SETUP\
+      \ REQUIRED: Docker Manager > this project > Manage > Environment' >&2\n  echo\
+      \ 'Set STEEL_HOST to your VPS hostname (no https://, port or path), then Save\
+      \ and deploy.' >&2\n  echo '\uC124\uC815 \uD544\uC694: \uAD00\uB9AC > \uD658\
+      \uACBD\uC5D0 STEEL_HOST=\uBCF8\uC778\uC11C\uBC84\uC8FC\uC18C \uC785\uB825 \uD6C4\
+      \ \uC800\uC7A5 \uBC0F \uBC30\uD3EC\uD558\uC138\uC694.' >&2\n  exit 1\nfi\n\n\
+      if [ -n \"$$STEEL_PASSWORD\" ]; then\n  # htpasswd -i is line-oriented; only\
+      \ printable ASCII, 16..72 bytes.\n  if ! printf '%s\\n' \"$$STEEL_PASSWORD\"\
+      \ | LC_ALL=C awk '\n    length($$0)<16 || length($$0)>72 || /[^ -~]/ { exit\
+      \ 1 }\n    { count++ } END { if(count!=1) exit 1 }'; then\n    echo 'STEEL_PASSWORD\
+      \ must contain 16..72 printable ASCII characters on one line.' >&2\n    exit\
+      \ 1\n  fi\nelif [ -s /auth/users ]; then\n  echo 'Existing Steel password preserved.\
+      \ \uAE30\uC874 \uBE44\uBC00\uBC88\uD638\uB97C \uC720\uC9C0\uD569\uB2C8\uB2E4\
+      .'\n  exit 0\nelse\n  RANDOM_HEX=$$(od -An -N24 -tx1 /dev/urandom)\n  STEEL_PASSWORD=$$(printf\
+      \ '%s' \"$$RANDOM_HEX\" | tr -d ' \\n')\n  test \"$${#STEEL_PASSWORD}\" -eq\
+      \ 48 || { echo 'Password generation failed' >&2; exit 1; }\n  case \"$$STEEL_PASSWORD\"\
+      \ in *[!0-9a-f]*) echo 'Invalid entropy output' >&2; exit 1;; esac\n  GENERATED=1\n\
+      fi\ntrap 'rm -f /auth/users.new' EXIT\nprintf '%s\\n' \"$$STEEL_PASSWORD\" |\
+      \ htpasswd -i -B -C 10 -c /auth/users.new steel\nchmod 644 /auth/users.new\n\
+      mv /auth/users.new /auth/users\nif [ \"$${GENERATED:-0}\" = 1 ]; then\n  echo\
+      \ 'Steel first login / \uCD5C\uCD08 \uB85C\uADF8\uC778 (store privately / \uC548\
+      \uC804\uD558\uAC8C \uBCF4\uAD00):'\n  echo 'Username: steel'\n  printf 'Password:\
+      \ %s\\n' \"$$STEEL_PASSWORD\"\n  echo 'If lost: set STEEL_PASSWORD in Environment\
+      \ and Save and deploy. Do not delete volumes.'\nelse\n  echo 'Steel password\
+      \ configured. \uBE44\uBC00\uBC88\uD638 \uC124\uC815 \uC644\uB8CC.'\nfi\n"
     environment:
-      STEEL_PASSWORD: ${STEEL_PASSWORD:?Set a unique password of at least 16 characters}
+      STEEL_HOST: ${STEEL_HOST:-setup.invalid}
+      STEEL_PASSWORD: ${STEEL_PASSWORD:-}
     volumes:
     - auth:/auth
     network_mode: none
@@ -27,13 +54,28 @@ services:
     - /bin/sh
     - -ec
     command:
-    - "cat > /tmp/steel-nginx.conf <<'STEEL_NGINX'\nworker_processes auto;\nevents\
-      \ { worker_connections 1024; }\nhttp {\n  include /etc/nginx/mime.types;\n \
-      \ resolver 127.0.0.11 valid=10s ipv6=off;\n  map $$http_upgrade $$connection_upgrade\
-      \ { default upgrade; '' close; }\n  map $$http_upgrade $$steel_upstream { default\
-      \ steel-api:3000; '' steel-ui:80; }\n  server {\n    listen 8080;\n    server_tokens\
-      \ off;\n    auth_basic \"Steel Browser\";\n    auth_basic_user_file /auth/users;\n\
-      \    client_max_body_size 32m;\n    proxy_http_version 1.1;\n    proxy_set_header\
+    - "# Shared by initialization and gateway startup. Never echo untrusted input.\n\
+      if ! printf '%s\\n' \"$$STEEL_HOST\" | awk '\n  length($$0)>253 || length($$0)<4\
+      \ { exit 1 }\n  /[^a-zA-Z0-9.-]/ { exit 1 }\n  { n=split($$0,a,\".\"); if(n<2)\
+      \ exit 1;\n    for(i=1;i<=n;i++) if(length(a[i])<1 || length(a[i])>63 || a[i]\
+      \ ~ /^-/ || a[i] ~ /-$$/) exit 1;\n    if(tolower(a[n])==\"invalid\") exit 1;\n\
+      \    count++ }\n  END { if(count!=1) exit 1 }'; then\n  echo 'SETUP REQUIRED:\
+      \ Docker Manager > this project > Manage > Environment' >&2\n  echo 'Set STEEL_HOST\
+      \ to your VPS hostname (no https://, port or path), then Save and deploy.' >&2\n\
+      \  echo '\uC124\uC815 \uD544\uC694: \uAD00\uB9AC > \uD658\uACBD\uC5D0 STEEL_HOST=\uBCF8\
+      \uC778\uC11C\uBC84\uC8FC\uC18C \uC785\uB825 \uD6C4 \uC800\uC7A5 \uBC0F \uBC30\
+      \uD3EC\uD558\uC138\uC694.' >&2\n  exit 1\nfi\n\ntest -s /auth/users || { echo\
+      \ 'Authentication missing; redeploy auth-init' >&2; exit 1; }\ncat > /tmp/steel-nginx.conf\
+      \ <<'STEEL_NGINX'\nworker_processes 2;\nevents { worker_connections 1024; }\n\
+      http {\n  include /etc/nginx/mime.types;\n  resolver 127.0.0.11 valid=10s ipv6=off;\n\
+      \  map $$http_upgrade $$connection_upgrade { default upgrade; '' close; }\n\
+      \  map $$http_upgrade $$steel_upstream { default steel-api:3000; '' steel-ui:80;\
+      \ }\n  # Aggregate limit: proxy peers may share one IP; do not trust arbitrary\
+      \ forwarded headers.\n  limit_req_zone $$server_name zone=steel_requests:1m\
+      \ rate=20r/s;\n  server {\n    listen 8080;\n    server_name steel_gateway;\n\
+      \    server_tokens off;\n    auth_basic \"Steel Browser\";\n    auth_basic_user_file\
+      \ /auth/users;\n    limit_req zone=steel_requests burst=60 nodelay;\n    limit_req_status\
+      \ 429;\n    client_max_body_size 128m;\n    proxy_http_version 1.1;\n    proxy_set_header\
       \ Host $$host;\n    proxy_set_header Upgrade $$http_upgrade;\n    proxy_set_header\
       \ Connection $$connection_upgrade;\n    proxy_set_header Authorization \"\"\
       ;\n    proxy_read_timeout 3600s;\n    proxy_send_timeout 3600s;\n    proxy_buffering\
@@ -46,6 +88,11 @@ services:
       \      proxy_pass http://$$backend;\n    }\n    # Steel advertises a root CDP\
       \ websocket; ordinary requests serve the UI.\n    location / { proxy_pass http://$$steel_upstream;\
       \ }\n  }\n}\nSTEEL_NGINX\nexec nginx -c /tmp/steel-nginx.conf -g 'daemon off;'"
+    environment:
+      STEEL_HOST: ${STEEL_HOST:-setup.invalid}
+    mem_limit: 192m
+    cpus: 1
+    pids_limit: 64
     expose:
     - '8080'
     volumes:
@@ -54,13 +101,12 @@ services:
       auth-init:
         condition: service_completed_successfully
       steel-api:
-        condition: service_started
+        condition: service_healthy
       steel-ui:
-        condition: service_started
+        condition: service_healthy
     labels:
     - traefik.enable=true
-    - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${STEEL_HOST:?Enter
-      the Steel hostname without https or a path}`)
+    - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${STEEL_HOST:-setup.invalid}`)
     - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
     - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt
     - traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}
@@ -75,6 +121,13 @@ services:
     restart: unless-stopped
     environment:
       API_URL: http://steel-api:3000
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -q -O /dev/null http://127.0.0.1/ || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 12
     labels:
       traefik.enable: 'false'
     logging:
@@ -85,16 +138,47 @@ services:
   steel-api:
     image: ghcr.io/steel-dev/steel-browser-api@sha256:459919842ab1aac5201e33331fc070a13106edd26d968fc7551adcff334b54cf
     restart: unless-stopped
-    shm_size: 1gb
+    shm_size: 512m
+    init: true
+    stop_grace_period: 30s
+    mem_limit: ${STEEL_MEMORY_LIMIT:-2g}
+    pids_limit: 512
+    entrypoint:
+    - /bin/sh
+    - -ec
+    command:
+    - "#!/bin/sh\nset -eu\n# The lock file must never be removed: all cooperating\
+      \ containers use its inode.\nmkdir -p /data/browser\nexec flock --nonblock --conflict-exit-code\
+      \ 73 --no-fork /data/browser/.steel-profile-owner.lock /bin/sh -ec '\n  # Only\
+      \ the exclusive profile owner may remove stale Chromium singleton links.\n \
+      \ rm -f /data/browser/SingletonLock /data/browser/SingletonCookie /data/browser/SingletonSocket\n\
+      \  exec /app/api/entrypoint.sh\n'\n"
+    depends_on:
+      auth-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+      - CMD
+      - node
+      - -e
+      - Promise.all([fetch("http://127.0.0.1:3000/v1/health").then(r=>{if(!r.ok)throw
+        Error()}),fetch("http://127.0.0.1:9222/json/version").then(r=>r.json()).then(j=>{if(!j.webSocketDebuggerUrl)throw
+        Error()})]).then(()=>process.exit(0)).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 60s
     environment:
-      DOMAIN: ${STEEL_HOST:?Enter the Steel hostname without https or a path}
+      DOMAIN: ${STEEL_HOST:-setup.invalid}
       USE_SSL: 'true'
+      CHROME_USER_DATA_DIR: /data/browser
       LOG_STORAGE_ENABLED: 'true'
       LOG_STORAGE_PATH: /data/logs/browser-logs.duckdb
     volumes:
     - logs:/data/logs
     - exports:/tmp/steel-browser-exports
     - cache:/app/.cache
+    - browser:/data/browser
     labels:
       traefik.enable: 'false'
     logging:
@@ -107,3 +191,4 @@ volumes:
   logs: {}
   exports: {}
   cache: {}
+  browser: {}

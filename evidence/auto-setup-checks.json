@@ -1,0 +1,27 @@
+{
+  "scope": "local Docker fixture, no Buzz; not Hostinger acceptance",
+  "unit_contract_tests": 12,
+  "real_fixture": [
+    "bridge Traefik",
+    "automatic hostname from Traefik environment",
+    "empty STEEL_HOST",
+    "generated first password",
+    "actual own Compose reconciliation",
+    "unauthenticated 401",
+    "authenticated API 200 with derived public origin",
+    "successful repeated bootstrap with unchanged gateway ID"
+  ],
+  "unverified": [
+    "public ACME",
+    "Hostinger Open",
+    "real host-network forwarding"
+  ],
+  "published": false,
+  "sha256": {
+    "bootstrap.py": "2c7f1f500ae4c8b946abd35df23b9b0f09c3b412e8c0fe08349799d141189ff7",
+    "build_auto.py": "e9de302d4533aaf38ee32e21596cd303f6135f64010ee318b5e4fc83d366e83a",
+    "compose.auto.yaml": "c600ce951ab2492c635a95b37e2083f7a4b186e5511c0da1c9ce877736ef4259",
+    "Dockerfile.bootstrap": "6758af74d3205407659adc0248de480ac17e2dfb12f0f0a405ea88ca8b60fc76",
+    "read-auto-host.sh": "2afb6f7e7f37160d999eb9086d5b49237943c874572d8b207cfaa426ed4d41e4"
+  }
+}

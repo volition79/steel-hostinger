@@ -1,0 +1,36 @@
+name: Publish bootstrap
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          file: Dockerfile.bootstrap
+          platforms: linux/amd64
+          push: true
+          tags: ghcr.io/volition79/steel-hostinger-bootstrap:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/volition79/steel-hostinger
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Record digest
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: echo "$DIGEST" > bootstrap-digest.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-digest
+          path: bootstrap-digest.txt

@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-13",
+  "scope": "local Docker only; no Hostinger deployment",
+  "contract_tests": 5,
+  "empty_environment_compose_parse": "passed",
+  "auth_lifecycle": "passed",
+  "remote_viewer_input_before_after_recreate": "passed",
+  "profile_concurrent_owner_exit": 73,
+  "profile_unique_cookie_after_recreate": "passed",
+  "profile_unique_cookie_after_sigkill": "passed",
+  "cookie_disk_write_wait_seconds": 35,
+  "rate_burst": {
+    "requests": 240,
+    "401": 92,
+    "429": 148
+  },
+  "hostinger_import_dns_tls": "unverified"
+}

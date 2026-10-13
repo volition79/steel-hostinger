@@ -2,4 +2,4 @@ api: ghcr.io/steel-dev/steel-browser-api@sha256:459919842ab1aac5201e33331fc070a1
 httpd: httpd@sha256:3440c39d8d6f54fa9ad2549e5a60c19ddd435faadc29c1ad28aa795f71888889
 nginx: nginx@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
 ui: ghcr.io/steel-dev/steel-browser-ui@sha256:b7f0906953175c48037a293b11d789f1b05ca786585a46128e15bdeb26f37dc8
-bootstrap: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:4e82cbdcad673d6d6ab3739f3abd83f377075138860bb817321fbc94079c1501
+bootstrap: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc

@@ -119,3 +119,7 @@ Python 3 + PyYAML: `python3 build_compose.py`로 배포 파일을 생성합니�
 ## 초기 버전의 dns_mismatch 복구
 
 기본 VPS 주소가 127.0.1.1로 조회되어 배포가 실패했다면, 기존 프로젝트의 **관리 → YAML 편집기**에서 `bootstrap`의 `image`만 수정판의 이미지 참조로 교체하고 배포하세요. 프로젝트 이름·볼륨·다른 서비스를 삭제하거나 변경하지 않습니다. 재시작만으로는 digest가 고정된 구버전이 업데이트되지 않습니다.
+
+```text
+ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc
+```

@@ -219,7 +219,7 @@ services:
         max-size: 5m
         max-file: '2'
   bootstrap:
-    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:4e82cbdcad673d6d6ab3739f3abd83f377075138860bb817321fbc94079c1501
+    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc
     restart: 'no'
     init: true
     read_only: true

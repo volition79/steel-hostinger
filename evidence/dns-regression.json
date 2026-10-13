@@ -11,5 +11,11 @@
     "non-public DNS answer"
   ],
   "bootstrap_sha256": "7bdd9c3c1fbe07fdb59a30ac874d74c8f0aa3252024784472be3730aa39d3a97",
-  "vps_redeployment": "user acceptance pending"
+  "vps_redeployment": "user acceptance pending",
+  "actions_run": 38360900823,
+  "bootstrap_digest": "sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc",
+  "anonymous_pull": "passed",
+  "published_container_regression": "passed",
+  "published_source_hash_matches": true,
+  "compose_change": "bootstrap image only; empty environment parse passed"
 }

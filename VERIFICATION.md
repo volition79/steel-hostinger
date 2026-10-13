@@ -61,3 +61,5 @@ Scoped direct evidence only; no full Sonol release-gate certification is claimed
 
 User VPS evidence showed the base hostname resolving to 127.0.1.1 while the generated hostname resolves to public A/AAAA. The old exact local-set comparison blocked initialization.
 Twenty scoped tests now pass. A real read-only Docker helper container with the base hostname overridden to 127.0.1.1 successfully verified both public names through HTTPS DNS. Local IPv4-only resolution is accepted only as a subset of the matching public A/AAAA records. Genuine mismatches and unavailable/malformed public DNS remain blocked. Routing, credentials and persistent volumes are unchanged. Hostinger redeployment remains the user's acceptance test.
+
+- Corrected release: Actions 38360900823 succeeded; anonymous Docker pull and the loopback regression passed again on the published image. Embedded source hash matches checkout. Automatic Compose changed only the bootstrap image and still parses with empty environment.

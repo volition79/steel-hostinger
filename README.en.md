@@ -112,3 +112,7 @@ Readiness checks both the API and actual Chromium endpoint. Docker does not auto
 ## Recovering an initial dns_mismatch deployment
 
 If the base VPS hostname resolved to 127.0.1.1, edit the existing project YAML and replace only the bootstrap image reference with the corrected release digest, then deploy. Preserve the project name, volumes and other services. Restart alone does not update digest-pinned images.
+
+```text
+ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc
+```

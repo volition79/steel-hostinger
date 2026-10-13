@@ -152,7 +152,7 @@ services:
       timeout: 3s
       retries: 20
   login:
-    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc
+    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:956f1655a04fae34914f4a7c95932b5a2948846f37d679a4530aa905334e338f
     restart: unless-stopped
     init: true
     command:
@@ -260,7 +260,7 @@ services:
         max-size: 5m
         max-file: '2'
   bootstrap:
-    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:3476916882e6b0b1144c42e6bbba91b164ab5e214a8e04b97be9bc06906246bc
+    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:956f1655a04fae34914f4a7c95932b5a2948846f37d679a4530aa905334e338f
     restart: 'no'
     init: true
     read_only: true

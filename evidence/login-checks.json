@@ -22,5 +22,11 @@
     "gateway.conf": "73b91a98e07cadb9f6ba5e88b5ce681591a1bd9aa9da1e3783045e47a6871f41",
     "bootstrap.py": "8c0d2a8cbac08d794fc27f59f78e6e81ee11a0303afa98199949e4a72cb15cc5",
     "Dockerfile.bootstrap": "9c3d15a2f9bf45f5eab6c20764d689f930dbfe43dfbd51b9bb4a8bd6dca7d350"
+  },
+  "publication": {
+    "actions_run": 38363321836,
+    "digest": "sha256:956f1655a04fae34914f4a7c95932b5a2948846f37d679a4530aa905334e338f",
+    "anonymous_pull": "passed",
+    "published_sources_match": true
   }
 }

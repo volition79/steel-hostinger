@@ -38,6 +38,7 @@ STEEL_HOST and STEEL_PASSWORD may be omitted; the initial generated password app
 
 - Requires one running Traefik with a confirmed Docker provider and identifiable HTTPS entrypoint/certificate resolver.
 - Finds srv<number>.hstgr.cloud from the Docker server name, Traefik environment or existing router labels; Buzz is not required.
+- A loopback result such as 127.0.1.1 for the VPS base hostname triggers TLS-verified [Google Public DNS](https://developers.google.com/speed/public-dns/docs/doh/json) queries for both names. Failed queries or differing public addresses remain blocked; diagnostics show only hostnames and IPs.
 - Missing or conflicting candidates and unresolved DNS stop automatic configuration with a bootstrap log message. Fix the prerequisite and restart the project.
 - Saved host/network identity is retained. A changed discovery result stops rather than silently changing the API's public origin.
 - Only this project's gateway labels/network are reconciled. Other projects and data volumes are preserved.
@@ -107,3 +108,7 @@ Never delete a browser profile lock while another browser may own it. Recent cha
 Only one API from this package may own the browser volume. The startup wrapper holds an exclusive file lock for the API lifetime and removes only stale Chromium singleton links after acquiring it. Do not share this volume with another service or older unwrapped container. Stop the existing API before replacing it. Exit code 73 means another owner holds the lock. Never delete the ownership lock file.
 
 Readiness checks both the API and actual Chromium endpoint. Docker does not automatically restart a container merely because it becomes unhealthy. Recent cookie/input changes may not reach disk before a crash; persistent storage is not a guarantee of continued website authentication.
+
+## Recovering an initial dns_mismatch deployment
+
+If the base VPS hostname resolved to 127.0.1.1, edit the existing project YAML and replace only the bootstrap image reference with the corrected release digest, then deploy. Preserve the project name, volumes and other services. Restart alone does not update digest-pinned images.

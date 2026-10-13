@@ -56,3 +56,8 @@ Scoped direct evidence only; no full Sonol release-gate certification is claimed
 - Bootstrap publication: GitHub Actions run 38356917229 succeeded. Anonymous GHCR manifest access returned HTTP 200. compose.auto.yaml now references the published immutable helper digest. VPS acceptance remains pending.
 
 - Published image verification: real Docker pull with an empty authentication config succeeded; embedded bootstrap.py SHA256 matches source; bundled Docker Compose v2.40.3 runs. Generated automatic file matches generator and parses with no user environment variables.
+
+## DNS loopback incident fix (2026-10-13)
+
+User VPS evidence showed the base hostname resolving to 127.0.1.1 while the generated hostname resolves to public A/AAAA. The old exact local-set comparison blocked initialization.
+Twenty scoped tests now pass. A real read-only Docker helper container with the base hostname overridden to 127.0.1.1 successfully verified both public names through HTTPS DNS. Local IPv4-only resolution is accepted only as a subset of the matching public A/AAAA records. Genuine mismatches and unavailable/malformed public DNS remain blocked. Routing, credentials and persistent volumes are unchanged. Hostinger redeployment remains the user's acceptance test.

@@ -2,6 +2,7 @@
 import copy
 import fcntl
 import hashlib
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -10,6 +11,8 @@ import socket
 import subprocess
 import tempfile
 import time
+import urllib.parse
+import urllib.request
 
 NAME = re.compile(r'[a-z0-9][a-z0-9_-]{0,62}\Z')
 BASE = re.compile(r'(?:^|\.)(srv[0-9]+\.hstgr\.cloud)\Z')
@@ -108,12 +111,51 @@ def discover(items, self_id, daemon_name, explicit=''):
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}',network): raise Pending('proxy_network_invalid')
     return dict(project=project,host=host,base=base,network=network,entrypoint=entry,resolver=resolver,host_proxy=proxy.get('HostConfig',{}).get('NetworkMode')=='host')
 
+def public_addresses(host):
+    """TLS-verified DNS lookup independent of the VPS's local hostname mapping."""
+    result=set()
+    try:
+        for record_type,version in ((1,4),(28,6)):
+            query=urllib.parse.urlencode({'name':host,'type':record_type,
+                                         'edns_client_subnet':'0.0.0.0/0'})
+            with urllib.request.urlopen('https://dns.google/resolve?'+query,timeout=6) as response:
+                raw=response.read(65537)
+            if len(raw)>65536: raise ValueError('oversized response')
+            data=json.loads(raw)
+            if data.get('Status')!=0 or data.get('TC',False):
+                raise ValueError('DNS query unsuccessful')
+            for answer in data.get('Answer',[]):
+                if answer.get('type')!=record_type: continue
+                address=ipaddress.ip_address(answer['data'])
+                if address.version!=version or not address.is_global:
+                    raise ValueError('non-public address')
+                result.add(str(address))
+    except (OSError,ValueError,KeyError,TypeError,AttributeError):
+        raise Pending('public_dns_unavailable') from None
+    if not result: raise Pending('public_dns_no_addresses')
+    return result
+
 def verify_dns(plan):
-    def addresses(h):
-        try: return {x[4][0] for x in socket.getaddrinfo(h,443,type=socket.SOCK_STREAM)}
-        except OSError: raise Pending('dns_not_ready') from None
-    if not addresses(plan['host']) or addresses(plan['host'])!=addresses(plan['base']):
-        raise Pending('dns_mismatch')
+    def addresses(host):
+        try:
+            return {str(ipaddress.ip_address(x[4][0]))
+                    for x in socket.getaddrinfo(host,443,type=socket.SOCK_STREAM)}
+        except (OSError,ValueError): raise Pending('dns_not_ready') from None
+    host_ips=addresses(plan['host']); base_ips=addresses(plan['base'])
+    if host_ips and host_ips==base_ips: return
+    # Hostinger can resolve its own srv hostname to 127.0.1.1 inside Docker.
+    # Only this specific local alias case permits independent public verification.
+    loopback={ip for ip in base_ips if ipaddress.ip_address(ip).is_loopback}
+    details=f"host={plan['host']}:{','.join(sorted(host_ips))} base={plan['base']}:{','.join(sorted(base_ips))}"
+    if host_ips and loopback and all(ipaddress.ip_address(ip).is_global for ip in host_ips):
+        print('Steel DNS local alias / 내부 주소 별칭: '+details,flush=True)
+        public_host=public_addresses(plan['host']); public_base=public_addresses(plan['base'])
+        if (public_host==public_base and host_ips<=public_host
+                and (base_ips-loopback)<=public_base):
+            print('Steel DNS verified using public DNS / 공인 DNS 확인 완료: '+','.join(sorted(public_base)),flush=True)
+            return
+        details+=f" public_host={','.join(sorted(public_host))} public_base={','.join(sorted(public_base))}"
+    raise Pending('dns_mismatch '+details)
 
 def inspect_all():
     ids=run(['ps','-aq']).split()

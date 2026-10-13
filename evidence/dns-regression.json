@@ -1,0 +1,15 @@
+{
+  "incident": "Hostinger base hostname resolves to 127.0.1.1 inside Docker; generated hostname resolves publicly",
+  "tests": 20,
+  "actual_container": "PASS: read-only helper with --add-host srv2042329.hstgr.cloud:127.0.1.1, real HTTPS public DNS",
+  "negative_cases": [
+    "ordinary public mismatch",
+    "public mismatch after loopback",
+    "unexpected local addresses",
+    "public lookup failure",
+    "malformed response",
+    "non-public DNS answer"
+  ],
+  "bootstrap_sha256": "7bdd9c3c1fbe07fdb59a30ac874d74c8f0aa3252024784472be3730aa39d3a97",
+  "vps_redeployment": "user acceptance pending"
+}

@@ -41,3 +41,14 @@ Unresolved: real hPanel Open selection, public ACME, Hostinger first-deploy timi
 User requested publication, retaining VPS installation/testing for themselves.
 Scope: publish source and bootstrap image, verify anonymous image and immutable raw Compose access.
 No VPS mutation. Existing local runtime evidence remains scoped; Hostinger acceptance remains pending.
+
+## DNS-02 Hostinger loopback resolver correction
+
+User authorized fixing the observed dns_mismatch and publishing a corrected installer.
+CodeMap off; Sonol Test scoped; no policy pack. VPS remains user-operated.
+Observed: generated hostname and Buzz resolve to public A/AAAA, base srv hostname resolves to 127.0.1.1 inside Docker.
+Change: only a mismatching loopback base triggers HTTPS public DNS checks of both names; no DNS bypass.
+Keep ordinary local equality unchanged and reject genuine mismatches, failed/malformed public responses,
+non-public fallback addresses and unexpected local addresses. Log address-only diagnostics (no credentials).
+Validate regression cases, actual container with base hostname overridden to loopback, image/source parity,
+anonymous pull and raw installer verification. Existing volumes and routing code are unchanged.

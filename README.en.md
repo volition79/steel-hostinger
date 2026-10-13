@@ -14,13 +14,26 @@ Steel itself does not require Buzz or buzz-agents.
 This package requires **Hostinger Docker Manager and a running Traefik instance**.
 Prepare Traefik first if it is absent.
 
-Automatic setup is implemented in the local development version. A real Docker fixture without Buzz verified discovery, Traefik forwarding, authenticated Steel API access and idempotent reruns.
-The new helper image is not published yet. Hostinger Open-button discovery and public certificate issuance remain unverified.
-The public manual installer still needs STEEL_HOST. Do not use the development compose.auto.yaml in URL installation: it currently references a local test image.
+## Automatic installation by URL
+
+1. Ensure **Traefik is running** in Hostinger Docker Manager.
+2. Choose **Compose from URL** and enter:
+
+   `https://raw.githubusercontent.com/volition79/steel-hostinger/main/compose.auto.yaml`
+
+3. Use a unique project name, such as `steel-browser`.
+4. On supported default Hostinger configurations, **leave Environment empty and deploy**. The hostname and initial password are configured automatically.
+5. Once deployed, click **Open**. If absent, use the HTTPS URL in `bootstrap` logs. Initial certificate issuance can take time.
+6. Enter username **steel** and the initial password from `auth-init` logs in the browser authentication prompt.
+7. Open your target website inside Steel and sign in there.
+
+This URL tracks main. Replace main with the supplied commit SHA to pin a release.
+All images are publicly available and digest-pinned; no local image build is needed.
+Local Docker checks without Buzz passed. **Real Hostinger URL import, Open-button discovery and public ACME remain user acceptance tests.**
 
 ## Automatic setup conditions
 
-The intended published flow is: deploy by URL → automatic address configuration → Open → login.
+The flow is: deploy by URL → automatic address configuration → Open → login.
 STEEL_HOST and STEEL_PASSWORD may be omitted; the initial generated password appears in auth-init logs.
 
 - Requires one running Traefik with a confirmed Docker provider and identifiable HTTPS entrypoint/certificate resolver.
@@ -32,9 +45,9 @@ STEEL_HOST and STEEL_PASSWORD may be omitted; the initial generated password app
 - File-only provider configuration that cannot be confirmed, multiple Traefik instances or conflicting domains are outside the automatic support scope.
 
 For development, build Dockerfile.bootstrap as steel-bootstrap:test, then run `python3 build_auto.py --image steel-bootstrap:test`.
-Before public release, publish the helper and regenerate using its verified digest.
+The public file uses the helper digest in images.yaml; regenerate with `python3 build_auto.py`.
 
-## Manual installation using the public file
+## Advanced: manual hostname installation
 
 1. Ensure Hostinger's Traefik is running.
 2. Docker Manager → Compose from URL:

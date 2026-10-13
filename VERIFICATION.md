@@ -53,4 +53,6 @@ Scoped direct evidence only; no full Sonol release-gate certification is claimed
 - Real Traefik forwards HTTPS: unauthenticated requests return 401; a generated first-install password allows Steel API access; generated public URLs contain the discovered hostname.
 - Re-running bootstrap exits successfully and preserves the gateway container ID.
 - Fixture DNS and certificates are synthetic. Host-mode selection is unit-tested; the real forwarding fixture uses bridge networking. Public ACME and Hostinger deployment/Open are still unverified.
-- Source is local and the bootstrap image has not been publicly released. Development compose.auto.yaml is not a usable public URL installer yet.
+- Bootstrap publication: GitHub Actions run 38356917229 succeeded. Anonymous GHCR manifest access returned HTTP 200. compose.auto.yaml now references the published immutable helper digest. VPS acceptance remains pending.
+
+- Published image verification: real Docker pull with an empty authentication config succeeded; embedded bootstrap.py SHA256 matches source; bundled Docker Compose v2.40.3 runs. Generated automatic file matches generator and parses with no user environment variables.

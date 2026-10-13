@@ -16,13 +16,26 @@ Steel 자체는 Buzz나 buzz-agents 설치를 요구하지 않습니다.
 이 패키지의 설치 전제는 **Hostinger Docker Manager와 실행 중인 Traefik**입니다.
 Traefik이 없다면 먼저 준비해야 합니다.
 
-**주소 자동 설정은 로컬 개발 버전에 구현되어 있습니다.** Buzz가 없는 Docker 환경에서 주소 탐지·Traefik 연결·인증 후 Steel API 접속과 반복 실행을 검증했습니다.
-새 도우미 이미지의 공개 배포와 Hostinger 실서버의 ‘열기’·공인 인증서 검증은 아직 남아 있습니다.
-현재 공개된 수동 설치 파일은 아래처럼 `STEEL_HOST` 입력이 필요합니다. 개발용 `compose.auto.yaml`은 로컬 테스트 이미지가 필요하므로 아직 URL 설치에 사용하지 마세요.
+## URL로 자동 설치
+
+1. Hostinger Docker Manager에서 **Traefik이 실행 중인지** 확인합니다.
+2. **컴포즈 → URL에서 Compose**에 다음 주소를 입력합니다.
+
+   `https://raw.githubusercontent.com/volition79/steel-hostinger/main/compose.auto.yaml`
+
+3. 프로젝트 이름은 `steel-browser`처럼 기존 프로젝트와 다른 이름을 사용합니다.
+4. 지원되는 기본 Hostinger 구성에서는 **환경을 비워 둔 채 배포**합니다. 서버 주소와 최초 비밀번호를 자동 설정합니다.
+5. 배포가 끝나면 프로젝트의 **열기**를 누릅니다. 표시되지 않으면 `bootstrap` 로그의 HTTPS 주소를 엽니다. 최초 인증서 발급에는 시간이 걸릴 수 있습니다.
+6. 브라우저 인증 창에 사용자 이름 **steel**, `auth-init` 로그에 표시된 최초 비밀번호를 입력합니다.
+7. Steel 화면에서 방문할 사이트를 열고 로그인합니다.
+
+이 주소는 main 브랜치를 따릅니다. 특정 버전을 유지하려면 main 대신 안내받은 커밋 SHA를 사용하세요.
+이미지는 공개된 digest로 고정되어 있으며 별도 빌드가 필요 없습니다.
+로컬 Docker에서 Buzz 없이 자동 주소 설정·인증·Steel 접속을 검증했습니다. **실제 Hostinger의 URL 가져오기·열기·공인 인증서는 사용자 테스트가 남아 있습니다.**
 
 ## 자동 설치 동작과 조건
 
-공개 배포 후의 사용 흐름은 **URL로 배포 → 주소 자동 설정 → 열기 → 로그인**입니다.
+사용 흐름은 **URL로 배포 → 주소 자동 설정 → 열기 → 로그인**입니다.
 `STEEL_HOST`와 비밀번호를 생략할 수 있도록 구현했습니다. 최초 비밀번호는 `auth-init` 로그에서 확인합니다.
 
 - 실행 중인 Traefik 한 개, 활성화된 Docker provider, 식별 가능한 HTTPS 진입점·인증서 설정이 필요합니다.
@@ -35,9 +48,9 @@ Traefik이 없다면 먼저 준비해야 합니다.
 - Traefik에 Docker provider를 파일로만 설정하여 활성화를 확인할 수 없는 구성, 다중 Traefik·다중 주소 후보는 현재 자동 지원 범위 밖입니다.
 
 개발자 검증: `docker build -f Dockerfile.bootstrap -t steel-bootstrap:test .` 후 `python3 build_auto.py --image steel-bootstrap:test`로 개발용 파일을 생성합니다.
-공개 배포 시에는 도우미 이미지를 게시하고 검증된 digest로 다시 생성해야 합니다.
+공개 파일은 `images.yaml`의 도우미 digest를 사용해 `python3 build_auto.py`로 생성합니다.
 
-## 현재 공개 파일로 수동 설치
+## 고급: 주소를 지정하는 수동 설치
 
 1. Hostinger Docker Manager에서 Traefik이 실행 중인지 확인합니다.
 2. 컴포즈 → URL에서 Compose에 아래 주소를 입력합니다.

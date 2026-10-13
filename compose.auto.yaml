@@ -219,7 +219,7 @@ services:
         max-size: 5m
         max-file: '2'
   bootstrap:
-    image: steel-bootstrap:test
+    image: ghcr.io/volition79/steel-hostinger-bootstrap@sha256:4e82cbdcad673d6d6ab3739f3abd83f377075138860bb817321fbc94079c1501
     restart: 'no'
     init: true
     read_only: true
